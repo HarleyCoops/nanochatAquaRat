@@ -158,44 +158,47 @@ To adapt nanochat from GSM8K to AQuA-RAT, we modified the following components:
 
 ```python
 # New file: scripts/prepare_aqua.py
-def download_aqua(output_dir):
-    """Download train/dev/test splits from DeepMind GitHub"""
-    base_url = "https://raw.githubusercontent.com/google-deepmind/AQuA/master/"
-    for split in ['train', 'dev', 'test']:
-        download_file(f"{base_url}{split}.json", f"{output_dir}/{split}.json")
+### 1. Dataset Preparation (`scripts/prepare_aqua.py`)
 
-def format_for_sft(examples):
-    """Convert AQuA format to nanochat conversation format"""
-    # Format: <|user|>Problem<|assistant|>Rationale + Answer
+- Uses `datasets.load_dataset("deepmind/aqua_rat")` and optionally caps split sizes.
+- Emits JSONL files (`train.jsonl`, `validation.jsonl`, `test.jsonl`) compatible with
+  the conversation schema used throughout nanochat.
+- Defaults to `~/.cache/nanochat/aqua`, but accepts `--output_dir` overrides so
+  launchers can bundle their own artifact.
+
+```python
+def format_example(row):
+    options = row["options"]
+    assistant_content = [
+        {"type": "text", "text": row["rationale"].strip()},
+        {"type": "text", "text": f"Answer: {row['correct'].strip().upper()}"},
+    ]
+    return {
+        "messages": [
+            {"role": "user", "content": _render_user_prompt(row["question"], options)},
+            {"role": "assistant", "content": assistant_content},
+        ],
+        "letters": letters,
+        "answer_letter": correct,
+    }
 ```
 
 ### 2. Task Module (`tasks/aqua.py`)
 
-**Created new task handler** following the GSM8K interface:
+- Accepts optional `data_dir` (or `AQUA_DATA_DIR` / `NANOCHAT_AQUA_DIR`) so the task
+  can read the cached JSONL; otherwise falls back to Hugging Face.
+- Provides `_render_user_prompt` to format the question/options using the common
+  multiple-choice helper and `_extract_letter` to score completions.
+- Returns conversations whose assistant messages include both the rationale and a
+  final `Answer: <LETTER>` line for SFT, while `evaluate()` only cares about the letter.
 
 ```python
-# New file: tasks/aqua.py
-def load_split(base_dir, split='train'):
-    """Load AQuA examples from JSON files"""
-    
-def render_prompt(example):
-    """Format problem as prompt with multiple choice options"""
-    return f"""You are a careful math tutor. Solve step by step.
-
-Problem: {example['question']}
-
-Choices:
-{format_options(example['options'])}
-
-Think step by step. On the last line, output exactly:
-Final Answer: <LETTER>
-"""
-
-def extract_letter(completion):
-    """Parse A-E from model output using regex"""
-    
-def reward_from_completion(example, completion):
-    """Return 1.0 if letter matches, 0.0 otherwise + shaping bonus"""
+def _extract_letter(text, default=None):
+    answer_match = re.search(r"answer\s*[:\-]\s*([A-E])", text, flags=re.IGNORECASE)
+    if answer_match:
+        return answer_match.group(1).upper()
+    match = LETTER_RE.search(text)
+    return match.group(1).upper() if match else default
 ```
 
 **Key differences from GSM8K**:
@@ -207,108 +210,51 @@ def reward_from_completion(example, completion):
 
 **Modified** to support both GSM8K and AQuA-RAT:
 
-```python
-# Modified: scripts/chat_rl.py
-parser.add_argument('--dataset', choices=['GSM8K', 'AQUA'])
-parser.add_argument('--aqua_path', type=str)
+Key updates:
 
-# Dataset routing
-if args.dataset == 'AQUA':
-    from tasks.aqua import load_split, render_prompt, reward_from_completion
-    train_iter = load_split(args.aqua_path, split='train')
-```
-
-**Added RL telemetry**:
-```python
-# New telemetry features
-def _letter_metrics(model_p, model_q, prompt, completion):
-    """
-    Compute KL divergence between current and reference policy
-    at the letter-choice decision point (Final Answer: X)
-    Returns: (kl, margin, predicted_letter, distribution)
-    """
-
-def _sequence_kl_mc(model_p, model_q, prompt, completion):
-    """
-    Monte Carlo estimate of sequence-level KL divergence
-    using teacher forcing on the sampled completion
-    """
-```
+- `train_task` / `val_task` now instantiate `AQUA(...)` instead of `GSM8K(...)`.
+- Rewards reuse the task's `evaluate()` helper so any completion containing
+  “Answer: X” (or the first bare letter) is scored correctly.
+- The validation helper became `run_aqua_eval`, still reporting pass@k accuracy
+  across sampled completions.
+- CLI overrides remain the same because the script continues to rely on the
+  nanochat configurator (`--run`, `--temperature`, `--max_new_tokens`, …).
 
 ### 4. Evaluation (`scripts/chat_eval.py`)
 
-**Added AQuA evaluation branch**:
-
-```python
-# Modified: scripts/chat_eval.py
-elif args.a == 'AQUA':
-    from tasks.aqua import load_split, render_prompt, extract_letter
-    dev = list(load_split(aqua_path, 'dev'))
-    
-    # Categorical accuracy evaluation
-    correct = 0
-    for ex in dev:
-        completion = engine.generate(render_prompt(ex))
-        pred = extract_letter(completion)
-        correct += int(pred == ex['correct'])
-    
-    accuracy = correct / len(dev)
-    wandb.log({'eval/aqua_dev_acc': accuracy})
-```
+- Registered `'AQUA'` in the task registry so `-a AQUA` just works.
+- Added a 20% random-guess baseline when aggregating the ChatCORE metric.
+- The categorical evaluation path reuses `run_categorical_eval`, clamping logits
+  to the available letters before scoring.
 
 ### 5. Training Script (`run_aquarat_small.sh`)
 
-**Modified from base nanochat**:
+**What changed vs upstream nanochat**:
 
 ```bash
-# Added: AQuA-RAT dataset preparation
-AQUA_DIR="$NANOCHAT_BASE_DIR/aqua"
-python -m scripts.prepare_aqua --output_dir "$AQUA_DIR"
+# (Optional) Cache the dataset locally as JSONL
+python -m scripts.prepare_aqua --output_dir "$NANOCHAT_BASE_DIR/aqua"
 
-# Added: Mechanistic interpretability setup
-MECH_INTERP_DIR="$NANOCHAT_BASE_DIR/mechanistic_interpretability"
-git clone https://github.com/google-deepmind/mechanistic-interp.git "$MECH_INTERP_DIR"
+# Mid-training now samples from the AQuA mixture
+torchrun -m scripts.mid_train -- --run=demo --num_iterations=200
 
-# Modified: SFT stage to use AQuA
-torchrun -m scripts.sft_train -- \
-  --dataset=AQUA \
-  --aqua_path="$AQUA_DIR"
+# SFT stage emphasises AQuA problems
+torchrun -m scripts.sft_train -- --run=demo --aqua_train_examples=20000
 
-# Added: RL stage with AQuA
-torchrun -m scripts.chat_rl -- \
-  --dataset=AQUA \
-  --aqua_path="$AQUA_DIR" \
-  --group_size=2 \
-  --max_new_tokens=64 \
-  --kl_every=100 \
-  --max_steps=200
+# RL fine-tuning rewards the correct letter on AQuA-RAT
+torchrun -m scripts.chat_rl -- --run=demo --temperature=0.7 --max_new_tokens=64
 ```
 
-### 6. Attention Logging (`nanochat/attn_logging.py`)
-
-**Created new module** for mechanistic interpretability:
-
-```python
-# New file: nanochat/attn_logging.py
-@contextmanager
-def capture_attention(model):
-    """Monkey-patch attention layers to capture softmax matrices"""
-
-def log_attention_summary(model, step):
-    """
-    Log per-layer attention entropy and heatmaps to W&B
-    Helps understand how attention patterns evolve during RL
-    """
-```
-
-**Modified `nanochat/gpt.py`**:
-```python
-# Modified: nanochat/gpt.py - CausalSelfAttention class
-def _forward_with_attn(self, x):
-    """Expose attention weights for logging"""
-    # ... compute attention ...
-    return y, att  # Return both output and attention matrix
-```
+- **`tasks/aqua.py`** loads AQuA-RAT either from Hugging Face or the cached JSONL
+  splits, formats questions as conversations, and scores completions by letter.
+- **`scripts/mid_train.py`** extends the original Reasoning+Chat mixture with a
+  50k slice of AQuA so the model sees multiple-choice algebra earlier.
+- **`scripts/chat_sft.py`** replaces the GSM8K component with AQuA, keeping ARC,
+  SmolTalk, and identity prompts for general chat coverage.
+- **`scripts/chat_rl.py`** retools the GRPO loop to sample, reward, and evaluate
+  AQuA answers (categorical accuracy instead of GSM8K free-form math).
+- **`scripts/chat_eval.py`** registers the new AQuA task so `chat_eval` can report
+  categorical accuracy alongside ARC/MMLU/GSM8K/HumanEval.
 
 ---
 
@@ -343,7 +289,9 @@ torchrun --nproc_per_node=8 -m scripts.mid_train
 **What happens**: Fine-tune on AQuA-RAT with ground-truth solutions
 
 ```bash
-torchrun --nproc_per_node=8 -m scripts.sft_train -- --dataset=AQUA
+torchrun --nproc_per_node=8 -m scripts.sft_train -- \
+  --aqua_train_examples=20000 \
+  --aqua_val_examples=254
 ```
 
 **Duration**: 30 minutes  
@@ -356,9 +304,8 @@ torchrun --nproc_per_node=8 -m scripts.sft_train -- --dataset=AQUA
 
 ```bash
 torchrun --nproc_per_node=1 -m scripts.chat_rl -- \
-  --dataset=AQUA \
-  --max_steps=200 \
-  --group_size=2
+  --temperature=0.7 \
+  --max_new_tokens=64
 ```
 
 **Duration**: 30 minutes  
@@ -476,42 +423,42 @@ bash run_aquarat_small.sh
 
 ## File Structure
 
-`
+```
 nanochatAquaRat/
-|-- scripts/
-|   |-- launch_hyperbolic_training.py  # NEW: Hyperbolic launcher
-|   |-- launch_lambda_training.py      # NEW: Comprehensive launcher
-|   |-- prepare_aqua.py                # NEW: AQuA dataset downloader
-|   |-- base_train.py                  # Modified: Added interp hooks
-|   |-- sft_train.py                   # Modified: AQuA support
-|   |-- chat_rl.py                     # Modified: AQuA + telemetry
-|   -- chat_eval.py                   # Modified: Categorical eval
-|-- tasks/
-|   |-- gsm8k.py                       # Original GSM8K task
-|   -- aqua.py                        # NEW: AQuA task handler
-|-- nanochat/
-|   |-- gpt.py                         # Modified: Attention exposure
-|   -- attn_logging.py                # NEW: Interpretability tools
-|-- run_aquarat_small.sh               # NEW: AQuA training script
-|-- launch_lambda.py                   # NEW: Simple deployment
-|-- QUICKSTART.md                      # NEW: Quick start guide
--- LAMBDA_MANUAL_SETUP.md            # NEW: Manual setup guide
-`
+├── nanochat/…                         # Vendored upstream nanochat package
+├── scripts/
+│   ├── base_train.py                  # Base pretraining stage
+│   ├── mid_train.py                   # Mid-training (now includes AQuA)
+│   ├── chat_sft.py                    # Chat SFT pipeline
+│   ├── sft_train.py                   # Shim so `-m scripts.sft_train` still works
+│   ├── chat_rl.py                     # Reinforcement learning on AQuA-RAT
+│   ├── chat_eval.py                   # Evaluation harness (adds AQuA task)
+│   ├── prepare_aqua.py                # AQuA-RAT JSONL exporter
+│   ├── launch_lambda_training.py      # Lambda Labs automation
+│   ├── launch_hyperbolic_training.py  # Hyperbolic Labs automation
+│   └── upload_to_gcs.sh               # Artifact helper
+├── tasks/
+│   ├── aqua.py                        # AQuA-RAT task implementation
+│   ├── arc.py / gsm8k.py / mmlu.py    # Other reasoning tasks
+│   └── …
+├── run_aquarat_small.sh               # End-to-end orchestration
+├── pyproject.toml / uv.lock           # Environment definitions
+└── README.md
+```
 ### Summary of Code Changes
 
 | File | Type | Description |
 |------|------|-------------|
-| `scripts/prepare_aqua.py` | NEW | Downloads AQuA-RAT from DeepMind GitHub |
-| `scripts/launch_lambda_training.py` | NEW | Full-featured Lambda Labs automation |
-| `scripts/launch_hyperbolic_training.py` | NEW | Hyperbolic Labs marketplace automation |
-| `tasks/aqua.py` | NEW | AQuA task handler (load, prompt, evaluate) |
-| `nanochat/attn_logging.py` | NEW | Attention capture and W&B logging |
-| `scripts/chat_rl.py` | MODIFIED | Added `--dataset=AQUA`, KL telemetry |
-| `scripts/chat_eval.py` | MODIFIED | Added categorical eval for AQuA |
-| `scripts/sft_train.py` | MODIFIED | Added `--dataset=AQUA` support |
-| `nanochat/gpt.py` | MODIFIED | Exposed attention weights |
-| `run_aquarat_small.sh` | NEW | Complete training pipeline |
-| `launch_lambda.py` | NEW | Simplified Lambda launcher |
+| `tasks/aqua.py` | NEW | Conversation + evaluation wrapper for AQuA-RAT |
+| `scripts/prepare_aqua.py` | NEW | Materializes train/validation/test JSONL splits for offline use |
+| `scripts/mid_train.py` | MODIFIED | Adds AQuA to the mid-training mixture |
+| `scripts/chat_sft.py` | MODIFIED | SFT mixture now includes AQuA controls |
+| `scripts/sft_train.py` | NEW | Thin compatibility shim around `chat_sft` |
+| `scripts/chat_rl.py` | MODIFIED | RL loop retargeted from GSM8K to AQuA-RAT |
+| `scripts/chat_eval.py` | MODIFIED | Registers AQuA for categorical evaluation |
+| `run_aquarat_small.sh` | MODIFIED | Pipeline glue aligned with AQuA staging |
+| `scripts/launch_hyperbolic_training.py` | NEW | Hyperbolic Labs automation helper |
+| `launch_lambda.py` / `scripts/launch_lambda_training.py` | EXISTING | Lambda Labs support retained |
 
 ---
 

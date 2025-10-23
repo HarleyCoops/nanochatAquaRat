@@ -87,6 +87,7 @@ DATA_PID=$!
 AQUA_DIR="$NANOCHAT_BASE_DIR/aqua"
 mkdir -p "$AQUA_DIR"
 python -m scripts.prepare_aqua --output_dir "$AQUA_DIR"
+export AQUA_DATA_DIR="$AQUA_DIR"
 
 wait $DATA_PID || true
 
@@ -110,35 +111,29 @@ export MECH_INTERP_DIR
 torchrun --standalone --nproc_per_node=8 -m scripts.base_train -- \
   --depth=8 \
   --run="$WANDB_RUN" \
-  --mechanistic_interp_dir="$MECH_INTERP_DIR"
+  --num_iterations=200
 
 # -----------------------------------------------------------------------------
 # Mid-stage + SFT (reuse defaults, assuming scripts consume latest checkpoint)
 # -----------------------------------------------------------------------------
-torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- --run="$WANDB_RUN"
-torchrun --standalone --nproc_per_node=8 -m scripts.sft_train -- --run="$WANDB_RUN" --dataset=AQUA --aqua_path="$AQUA_DIR"
+torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- --run="$WANDB_RUN" --num_iterations=200
+torchrun --standalone --nproc_per_node=8 -m scripts.sft_train -- \
+  --run="$WANDB_RUN" \
+  --aqua_train_examples=20000 \
+  --aqua_val_examples=254
 
 # -----------------------------------------------------------------------------
 # Reinforcement learning on AQuA-RAT (single GPU for quick validation)
 # -----------------------------------------------------------------------------
 torchrun --standalone --nproc_per_node=1 -m scripts.chat_rl -- \
   --run="$WANDB_RUN" \
-  --dataset=AQUA \
-  --aqua_path="$AQUA_DIR" \
-  --group_size=2 \
   --temperature=0.7 \
-  --max_new_tokens=64 \
-  --kl_every=100 \
-  --kl_batch=4 \
-  --kl_mode=letter \
-  --max_steps=200 \
-  --log_attention \
-  --mechanistic_interp_dir="$MECH_INTERP_DIR"
+  --max_new_tokens=64
 
 # -----------------------------------------------------------------------------
 # Evaluation on RL outputs
 # -----------------------------------------------------------------------------
-python -m scripts.chat_eval -- -i rl -a AQUA --run "$WANDB_RUN"
+python -m scripts.chat_eval -- -i rl -a AQUA
 
 # -----------------------------------------------------------------------------
 # Summarize reports

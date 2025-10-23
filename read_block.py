@@ -1,1 +1,0 @@
-# -*- coding: utf-8 -*-\nfrom pathlib import Path\ntext = Path('README.md').read_text()\nstart = text.index('## File Structure')\nend = text.index('### Summary of Code Changes', start)\nprint(text[start:end])\n
