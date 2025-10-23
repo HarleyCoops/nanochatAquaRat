@@ -65,16 +65,47 @@ This project adapts the **nanochat** training framework (originally designed for
 
 ### Architecture
 
-```
-Input Tokens → Embedding
-    ↓
-Transformer Blocks (depth N)
-    • Multi-head attention (causal)
-    • MLP with GELU
-    • Layer normalization
-    • Residual connections
-    ↓
-Output Logits → Next Token Prediction
+```mermaid
+flowchart TD
+    A[Input Tokens] --> B[Token Embedding]
+    B --> C[Position Embedding]
+    C --> D[Embedding Layer]
+    
+    D --> E[Transformer Block 1]
+    E --> F[Transformer Block 2]
+    F --> G[...]
+    G --> H[Transformer Block N]
+    
+    subgraph "Transformer Block"
+        I[Multi-Head<br/>Attention<br/>Causal]
+        J[Layer<br/>Normalization]
+        K[MLP with<br/>GELU]
+        L[Layer<br/>Normalization]
+        M[Residual<br/>Connection]
+        N[Residual<br/>Connection]
+    end
+    
+    H --> O[Final Layer Norm]
+    O --> P[Output Logits]
+    P --> Q[Next Token<br/>Prediction]
+    
+    style A fill:#1e3a8a,stroke:#1e40af,stroke-width:2px,color:#ffffff
+    style B fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#ffffff
+    style C fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#ffffff
+    style D fill:#1d4ed8,stroke:#1e40af,stroke-width:2px,color:#ffffff
+    style E fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
+    style F fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
+    style G fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
+    style H fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
+    style I fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
+    style J fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
+    style K fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
+    style L fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
+    style M fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
+    style N fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
+    style O fill:#1d4ed8,stroke:#1e40af,stroke-width:2px,color:#ffffff
+    style P fill:#1e3a8a,stroke:#1e40af,stroke-width:2px,color:#ffffff
+    style Q fill:#1e3a8a,stroke:#1e40af,stroke-width:2px,color:#ffffff
 ```
 
 **Key hyperparameters**:
