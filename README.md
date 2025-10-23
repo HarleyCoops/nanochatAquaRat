@@ -395,6 +395,7 @@ For marketplace nodes without automation access, follow this lightweight bootstr
    uv venv && uv sync --extra gpu
    source .venv/bin/activate
    uv run maturin develop
+    uv run python -m scripts.tok_train
    ```
 5. Install the Google Cloud SDK, authenticate, and stage the cached AQuA splits (or regenerate them):
    ```bash
@@ -406,8 +407,15 @@ For marketplace nodes without automation access, follow this lightweight bootstr
    unzip -o aqua_cache.zip -d ~/aqua_cache
    export AQUA_DATA_DIR=$HOME/aqua_cache
    ```
-6. Launch the desired script, e.g. `CUDA_VISIBLE_DEVICES=0 bash run_aquarat_lite.sh` or the full `run_aquarat_small.sh`.
-7. Monitor training via tmux/W&B and terminate the VM from Hyperbolic when the run finishes to stop billing.
+6. Download the evaluation bundle once so CORE metrics don’t fail:
+   ```bash
+   cd ~/.cache/nanochat
+   curl -L -o eval_bundle.zip https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip
+   unzip -q eval_bundle.zip && rm eval_bundle.zip
+   cd ~/nanochatAquaRat
+   ```
+7. Launch the desired script, e.g. `CUDA_VISIBLE_DEVICES=0 bash run_aquarat_lite.sh` or the full `run_aquarat_small.sh`.
+8. Monitor training via tmux/W&B and terminate the VM from Hyperbolic when the run finishes to stop billing.
 
 ### Option 4: Alternative Launcher Script
 
