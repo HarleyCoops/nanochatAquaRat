@@ -41,7 +41,7 @@ This project adapts the **nanochat** training framework (originally designed for
 - **Domain Transfer**: Demonstrates how to adapt a mathematical reasoning pipeline from free-form numeric answers to multiple-choice format
 - **RL on Math**: Implements GRPO-style reinforcement learning with reward shaping for categorical outputs
 - **Mechanistic Interpretability**: Integrates attention analysis during training to understand model reasoning patterns
-- **Production-Ready**: Includes automated Lambda Labs deployment for cloud GPU training
+- **Production-Ready**: Includes automated Lambda Labs and Hyperbolic Labs deployment helpers for cloud GPU training
 
 ### Key Results
 
@@ -65,47 +65,69 @@ This project adapts the **nanochat** training framework (originally designed for
 
 ### Architecture
 
-```mermaid
-flowchart TD
-    A[Input Tokens] --> B[Token Embedding]
-    B --> C[Position Embedding]
-    C --> D[Embedding Layer]
-    
-    D --> E[Transformer Block 1]
-    E --> F[Transformer Block 2]
-    F --> G[...]
-    G --> H[Transformer Block N]
-    
-    subgraph "Transformer Block"
-        I[Multi-Head<br/>Attention<br/>Causal]
-        J[Layer<br/>Normalization]
-        K[MLP with<br/>GELU]
-        L[Layer<br/>Normalization]
-        M[Residual<br/>Connection]
-        N[Residual<br/>Connection]
-    end
-    
-    H --> O[Final Layer Norm]
-    O --> P[Output Logits]
-    P --> Q[Next Token<br/>Prediction]
-    
-    style A fill:#1e3a8a,stroke:#1e40af,stroke-width:2px,color:#ffffff
-    style B fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#ffffff
-    style C fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#ffffff
-    style D fill:#1d4ed8,stroke:#1e40af,stroke-width:2px,color:#ffffff
-    style E fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
-    style F fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
-    style G fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
-    style H fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#ffffff
-    style I fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
-    style J fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
-    style K fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
-    style L fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
-    style M fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
-    style N fill:#06b6d4,stroke:#0891b2,stroke-width:2px,color:#ffffff
-    style O fill:#1d4ed8,stroke:#1e40af,stroke-width:2px,color:#ffffff
-    style P fill:#1e3a8a,stroke:#1e40af,stroke-width:2px,color:#ffffff
-    style Q fill:#1e3a8a,stroke:#1e40af,stroke-width:2px,color:#ffffff
+```tikz
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    every node/.style={font=\small},
+    input/.style={rectangle, draw=#1e40af, fill=#1e3a8a, text=white, minimum width=2cm, minimum height=0.8cm, align=center},
+    embedding/.style={rectangle, draw=#2563eb, fill=#3b82f6, text=white, minimum width=2cm, minimum height=0.8cm, align=center},
+    transformer/.style={rectangle, draw=#0284c7, fill=#0ea5e9, text=white, minimum width=2cm, minimum height=0.8cm, align=center},
+    internal/.style={rectangle, draw=#0891b2, fill=#06b6d4, text=white, minimum width=1.5cm, minimum height=0.6cm, align=center},
+    output/.style={rectangle, draw=#1e40af, fill=#1e3a8a, text=white, minimum width=2cm, minimum height=0.8cm, align=center},
+    arrow/.style={->, thick, color=#1e40af}
+]
+
+% Input layer
+\node[input] (input) {Input\\Tokens};
+\node[embedding, below of=input] (token_emb) {Token\\Embedding};
+\node[embedding, below of=token_emb] (pos_emb) {Position\\Embedding};
+\node[embedding, below of=pos_emb] (embed_layer) {Embedding\\Layer};
+
+% Transformer blocks
+\node[transformer, below of=embed_layer] (trans1) {Transformer\\Block 1};
+\node[transformer, below of=trans1] (trans2) {Transformer\\Block 2};
+\node[transformer, below of=trans2] (trans_dots) {...};
+\node[transformer, below of=trans_dots] (transN) {Transformer\\Block N};
+
+% Transformer block detail (side panel)
+\node[internal, right=4cm of trans2] (attn) {Multi-Head\\Attention\\Causal};
+\node[internal, below of=attn] (ln1) {Layer\\Norm};
+\node[internal, below of=ln1] (mlp) {MLP with\\GELU};
+\node[internal, below of=mlp] (ln2) {Layer\\Norm};
+\node[internal, below of=ln2] (res1) {Residual\\Connection};
+\node[internal, below of=res1] (res2) {Residual\\Connection};
+
+% Output layer
+\node[embedding, below of=transN] (final_norm) {Final Layer\\Norm};
+\node[output, below of=final_norm] (logits) {Output\\Logits};
+\node[output, below of=logits] (prediction) {Next Token\\Prediction};
+
+% Arrows
+\draw[arrow] (input) -- (token_emb);
+\draw[arrow] (token_emb) -- (pos_emb);
+\draw[arrow] (pos_emb) -- (embed_layer);
+\draw[arrow] (embed_layer) -- (trans1);
+\draw[arrow] (trans1) -- (trans2);
+\draw[arrow] (trans2) -- (trans_dots);
+\draw[arrow] (trans_dots) -- (transN);
+\draw[arrow] (transN) -- (final_norm);
+\draw[arrow] (final_norm) -- (logits);
+\draw[arrow] (logits) -- (prediction);
+
+% Transformer block detail arrows
+\draw[arrow] (attn) -- (ln1);
+\draw[arrow] (ln1) -- (mlp);
+\draw[arrow] (mlp) -- (ln2);
+\draw[arrow] (ln2) -- (res1);
+\draw[arrow] (res1) -- (res2);
+
+% Connection from transformer to detail
+\draw[arrow, dashed] (trans2) -- (attn);
+
+% Title for transformer block detail
+\node[above=0.5cm of attn, font=\small\bfseries, color=#1e40af] {Transformer Block Detail};
+
+\end{tikzpicture}
 ```
 
 **Key hyperparameters**:
@@ -423,7 +445,26 @@ tmux attach -t nanochat-train
 tail -f ~/nanochatAquaRat/training.log
 ```
 
-### Option 2: Lambda Labs Cloud (Manual)
+### Option 2: Hyperbolic Labs Cloud (Automated)
+
+Spin up on-demand GPUs via Hyperbolic's marketplace API:
+
+```bash
+# Set credentials
+export HYPERBOLIC_API_KEY='your-hyperbolic-api-key'
+export WANDB_API_KEY='your-wandb-api-key'
+
+# Launch with auto-start
+python scripts/launch_hyperbolic_training.py \
+  --gpu-count 1 \
+  --region us-east \
+  --auto-start \
+  --inject-env WANDB_API_KEY
+```
+
+The launcher discovers an available node (respecting `--region`, `--supplier`, or `--max-price` filters), provisions it, copies your `.env`, and optionally starts training in tmux. Use `--list` to inspect available marketplace inventory without launching.
+
+### Option 3: Lambda Labs Cloud (Manual)
 
 For step-by-step control, see [LAMBDA_MANUAL_SETUP.md](LAMBDA_MANUAL_SETUP.md).
 
@@ -434,7 +475,7 @@ For step-by-step control, see [LAMBDA_MANUAL_SETUP.md](LAMBDA_MANUAL_SETUP.md).
 4. Set up credentials: `echo "WANDB_API_KEY=..." > .env`
 5. Run training: `bash run_aquarat_small.sh`
 
-### Option 3: Alternative Launcher Script
+### Option 4: Alternative Launcher Script
 
 A simplified launcher is also available:
 
@@ -449,7 +490,7 @@ python launch_lambda.py \
 
 See [QUICKSTART.md](QUICKSTART.md) for details.
 
-### Option 4: Local/Custom Setup
+### Option 5: Local/Custom Setup
 
 ```bash
 # Setup environment
