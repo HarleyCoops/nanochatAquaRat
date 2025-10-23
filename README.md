@@ -476,28 +476,27 @@ bash run_aquarat_small.sh
 
 ## File Structure
 
-```
+`
 nanochatAquaRat/
-├── scripts/
-│   ├── launch_lambda_training.py  # NEW: Comprehensive launcher
-│   ├── prepare_aqua.py             # NEW: AQuA dataset downloader
-│   ├── base_train.py               # Modified: Added interp hooks
-│   ├── sft_train.py                # Modified: AQuA support
-│   ├── chat_rl.py                  # Modified: AQuA + telemetry
-│   └── chat_eval.py                # Modified: Categorical eval
-├── tasks/
-│   ├── gsm8k.py                    # Original GSM8K task
-│   └── aqua.py                     # NEW: AQuA task handler
-├── nanochat/
-│   ├── gpt.py                      # Modified: Attention exposure
-│   ├── attn_logging.py             # NEW: Interpretability tools
-│   └── ...                         # (other nanochat modules)
-├── run_aquarat_small.sh            # NEW: AQuA training script
-├── launch_lambda.py                # NEW: Simple deployment
-├── QUICKSTART.md                   # NEW: Quick start guide
-└── LAMBDA_MANUAL_SETUP.md          # NEW: Manual setup guide
-```
-
+|-- scripts/
+|   |-- launch_hyperbolic_training.py  # NEW: Hyperbolic launcher
+|   |-- launch_lambda_training.py      # NEW: Comprehensive launcher
+|   |-- prepare_aqua.py                # NEW: AQuA dataset downloader
+|   |-- base_train.py                  # Modified: Added interp hooks
+|   |-- sft_train.py                   # Modified: AQuA support
+|   |-- chat_rl.py                     # Modified: AQuA + telemetry
+|   -- chat_eval.py                   # Modified: Categorical eval
+|-- tasks/
+|   |-- gsm8k.py                       # Original GSM8K task
+|   -- aqua.py                        # NEW: AQuA task handler
+|-- nanochat/
+|   |-- gpt.py                         # Modified: Attention exposure
+|   -- attn_logging.py                # NEW: Interpretability tools
+|-- run_aquarat_small.sh               # NEW: AQuA training script
+|-- launch_lambda.py                   # NEW: Simple deployment
+|-- QUICKSTART.md                      # NEW: Quick start guide
+-- LAMBDA_MANUAL_SETUP.md            # NEW: Manual setup guide
+`
 ### Summary of Code Changes
 
 | File | Type | Description |
@@ -607,6 +606,7 @@ Budget options:
 ## Documentation
 
 - **[scripts/launch_lambda_training.py](scripts/launch_lambda_training.py)** - Full-featured automation
+- **[scripts/launch_hyperbolic_training.py](scripts/launch_hyperbolic_training.py)** - Hyperbolic marketplace automation
 - **[launch_lambda.py](launch_lambda.py)** - Simplified launcher
 - **[QUICKSTART.md](QUICKSTART.md)** - Fast track guide
 - **[LAMBDA_MANUAL_SETUP.md](LAMBDA_MANUAL_SETUP.md)** - Manual setup walkthrough
