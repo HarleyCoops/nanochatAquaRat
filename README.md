@@ -373,6 +373,42 @@ For step-by-step control, see [LAMBDA_MANUAL_SETUP.md](LAMBDA_MANUAL_SETUP.md).
 4. Set up credentials: `echo "WANDB_API_KEY=..." > .env`
 5. Run training: `bash run_aquarat_small.sh`
 
+### Option 4: Hyperbolic VM (Manual)
+
+For marketplace nodes without automation access, follow this lightweight bootstrap:
+
+1. Provision a GPU VM from the Hyperbolic console and copy the SSH command (including `-p <port>` and username).
+2. SSH in and install prerequisites:
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y git curl unzip build-essential python3 python3-venv tmux
+   git clone https://github.com/HarleyCoops/nanochatAquaRat.git
+   cd nanochatAquaRat
+   ```
+3. Create `.env` with the required keys (WANDB, GCS bucket, AQUA path) and upload your GCP service-account JSON to the VM, e.g. `scp -P <port> C:\path\to\credentials.json user@<ip>:/home/user/gcp-sa.json`.
+4. Install tooling and build the tokenizer:
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+   source "$HOME/.cargo/env"
+   export PATH="$HOME/.local/bin:$PATH"
+   uv venv && uv sync --extra gpu
+   source .venv/bin/activate
+   uv run maturin develop
+   ```
+5. Install the Google Cloud SDK, authenticate, and stage the cached AQuA splits (or regenerate them):
+   ```bash
+   curl -sSL https://sdk.cloud.google.com | bash
+   source "$HOME/.bashrc"
+   gcloud auth login --no-launch-browser
+   gcloud config set project <your-project-id>
+   gcloud storage cp gs://nanochat-aquarat-datasets/datasets/aqua/aqua_cache.zip .
+   unzip -o aqua_cache.zip -d ~/aqua_cache
+   export AQUA_DATA_DIR=$HOME/aqua_cache
+   ```
+6. Launch the desired script, e.g. `CUDA_VISIBLE_DEVICES=0 bash run_aquarat_lite.sh` or the full `run_aquarat_small.sh`.
+7. Monitor training via tmux/W&B and terminate the VM from Hyperbolic when the run finishes to stop billing.
+
 ### Option 4: Alternative Launcher Script
 
 A simplified launcher is also available:

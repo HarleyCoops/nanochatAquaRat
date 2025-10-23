@@ -92,20 +92,6 @@ export AQUA_DATA_DIR="$AQUA_DIR"
 wait $DATA_PID || true
 
 # -----------------------------------------------------------------------------
-# Mechanistic interpretability tooling setup (Google DeepMind repo)
-# -----------------------------------------------------------------------------
-MECH_INTERP_DIR="$NANOCHAT_BASE_DIR/mechanistic_interpretability"
-if [ ! -d "$MECH_INTERP_DIR" ]; then
-    echo "[info] Cloning Google DeepMind mechanistic interpretability repo"
-    git clone https://github.com/google-deepmind/mechanistic-interp.git "$MECH_INTERP_DIR"
-else
-    echo "[info] Updating mechanistic interpretability repo"
-    git -C "$MECH_INTERP_DIR" pull --ff-only
-fi
-
-export MECH_INTERP_DIR
-
-# -----------------------------------------------------------------------------
 # Base pretraining (depth=8 for smaller model) - COMMENTED OUT FOR LITE TESTING
 # -----------------------------------------------------------------------------
 # torchrun --standalone --nproc_per_node=8 -m scripts.base_train -- \
@@ -129,8 +115,8 @@ torchrun --standalone --nproc_per_node=1 -m scripts.chat_rl -- \
   --run="$WANDB_RUN" \
   --temperature=0.7 \
   --max_new_tokens=64 \
-  --device-batch-size=1 \
-  --num-samples=4
+  --device_batch_size=1 \
+  --num_samples=4
 
 # -----------------------------------------------------------------------------
 # Evaluation on RL outputs
