@@ -6,18 +6,33 @@ nanochat RL tuned on the [DeepMind AQuA-RAT dataset](https://huggingface.co/data
 
 ### Option 1: Lambda Labs (Recommended)
 
-Run training on Lambda Labs cloud GPUs with full automation:
+Run training on Lambda Labs cloud GPUs with the automation helper:
 
 ```bash
-# Set up credentials
+# Set up credentials locally
 export LAMBDA_API_KEY='your-lambda-api-key'
 export WANDB_API_KEY='your-wandb-api-key'
 
 # Launch and start training
-python launch_lambda.py --instance-type gpu_8x_h100_sxm5 --region us-west-1
+python scripts/launch_lambda_training.py \
+  --ssh-key-name your_lambda_ssh_key \
+  --instance-type gpu_8x_h100_sxm5 \
+  --region us-west-1 \
+  --auto-start \
+  --inject-env WANDB_API_KEY
 ```
 
-**See [QUICKSTART.md](QUICKSTART.md) for detailed Lambda Labs instructions.**
+The script provisions the instance, clones this repository, copies an `.env` file populated
+from the supplied environment variables, and starts `run_aquarat_small.sh` inside a detached tmux
+session. Use `tmux attach -t nanochat-train` after SSH'ing in to follow progress.
+
+**Manual alternative (dashboard walkthrough):**
+1. In the Lambda Cloud console, launch an instance (e.g., `gpu_8x_h100_sxm5`) in your desired region with your SSH key attached.
+2. Connect via SSH once the instance is `active`: `ssh -i /path/to/key.pem ubuntu@<INSTANCE_IP>`.
+3. Clone this repository on the instance: `git clone <repo-url> && cd nanochatAquaRat`.
+4. Provide credentials (`echo "WANDB_API_KEY=..." > .env` or `wandb login`). Optional: copy `.env` from local via `scp`.
+5. Run `bash run_aquarat_small.sh` (consider using `tmux` or `screen`).
+6. Monitor logs, Weights & Biases dashboards, and terminate the instance when training completes.
 
 ### Option 2: Local/Custom Setup
 
@@ -56,9 +71,9 @@ The training pipeline will:
 
 ## Documentation
 
-- **[QUICKSTART.md](QUICKSTART.md)** - Fast track guide for Lambda Labs deployment
-- **[LAMBDA_MANUAL_SETUP.md](LAMBDA_MANUAL_SETUP.md)** - Detailed manual setup walkthrough
-- **[.env.template](.env.template)** - Environment variable configuration template
+- `scripts/launch_lambda_training.py` - Automation helper for Lambda Labs launches
+- **README.md** (this file) - Manual Lambda walkthrough and local run instructions
+- `.env.template` (if present) - Suggested environment variable template
 
 ## Key Features
 
@@ -146,7 +161,7 @@ After training, you should see:
 This project is based on the nanochat framework. For issues specific to:
 - **AQuA-RAT training**: Open an issue in this repository
 - **Base nanochat framework**: Refer to the upstream nanochat project
-- **Lambda Labs deployment**: Check [LAMBDA_MANUAL_SETUP.md](LAMBDA_MANUAL_SETUP.md)
+- **Lambda Labs deployment**: Follow the automation and manual steps described above
 
 ## License
 
