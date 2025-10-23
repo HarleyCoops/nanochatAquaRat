@@ -89,6 +89,17 @@ mkdir -p "$AQUA_DIR"
 python -m scripts.prepare_aqua --output_dir "$AQUA_DIR"
 export AQUA_DATA_DIR="$AQUA_DIR"
 
+# Download eval bundle to prevent crash during base training
+EVAL_BUNDLE_URL="https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip"
+if [ ! -f "$NANOCHAT_BASE_DIR/eval_bundle/core.yaml" ]; then
+    echo "[info] Downloading eval bundle to prevent base training crash"
+    cd "$NANOCHAT_BASE_DIR"
+    curl -L -o eval_bundle.zip "$EVAL_BUNDLE_URL"
+    unzip -q eval_bundle.zip
+    rm eval_bundle.zip
+    cd "$REPO_ROOT"
+fi
+
 wait $DATA_PID || true
 
 # -----------------------------------------------------------------------------

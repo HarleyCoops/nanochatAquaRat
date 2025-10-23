@@ -89,6 +89,24 @@ mkdir -p "$AQUA_DIR"
 python -m scripts.prepare_aqua --output_dir "$AQUA_DIR"
 export AQUA_DATA_DIR="$AQUA_DIR"
 
+# Ensure identity conversations exist for SFT
+IDENTITY_PATH="$NANOCHAT_BASE_DIR/identity_conversations.jsonl"
+if [ ! -f "$IDENTITY_PATH" ]; then
+    echo "[info] Downloading identity conversations bundle"
+    curl -L -o "$IDENTITY_PATH" https://karpathy-public.s3.us-west-2.amazonaws.com/identity_conversations.jsonl
+fi
+
+# Download eval bundle to prevent crash during base training
+EVAL_BUNDLE_URL="https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip"
+if [ ! -f "$NANOCHAT_BASE_DIR/eval_bundle/core.yaml" ]; then
+    echo "[info] Downloading eval bundle to prevent base training crash"
+    cd "$NANOCHAT_BASE_DIR"
+    curl -L -o eval_bundle.zip "$EVAL_BUNDLE_URL"
+    unzip -q eval_bundle.zip
+    rm eval_bundle.zip
+    cd "$REPO_ROOT"
+fi
+
 wait $DATA_PID || true
 
 # -----------------------------------------------------------------------------

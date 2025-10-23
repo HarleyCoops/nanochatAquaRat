@@ -407,9 +407,10 @@ For marketplace nodes without automation access, follow this lightweight bootstr
    unzip -o aqua_cache.zip -d ~/aqua_cache
    export AQUA_DATA_DIR=$HOME/aqua_cache
    ```
-6. Download the evaluation bundle once so CORE metrics don’t fail:
+6. Fetch the identity conversation bundle (required for SFT) and the evaluation bundle once so CORE metrics don’t fail:
    ```bash
    cd ~/.cache/nanochat
+   curl -L -o identity_conversations.jsonl https://karpathy-public.s3.us-west-2.amazonaws.com/identity_conversations.jsonl
    curl -L -o eval_bundle.zip https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip
    unzip -q eval_bundle.zip && rm eval_bundle.zip
    cd ~/nanochatAquaRat

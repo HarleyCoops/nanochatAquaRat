@@ -120,6 +120,8 @@ class AQUA(Task):
 
     def get_example(self, index: int) -> Dict[str, object]:
         row = self.ds[index]
+        if isinstance(row, dict) and "messages" in row:
+            return row
         question: str = row["question"].strip()
         options: List[str] = row["options"]
         rationale: str = row["rationale"].strip()
