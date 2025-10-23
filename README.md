@@ -288,6 +288,29 @@ torchrun --nproc_per_node=1 -m scripts.chat_rl -- \
 
 ## Quick Start
 
+### Repo Setup & Rust Toolchain
+
+- Clone with submodules so the `rustbpe` tokenizer sources are present:
+  ```bash
+  git clone --recurse-submodules https://github.com/HarleyCoops/nanochatAquaRat.git
+  ```
+  For existing clones run `git submodule update --init --recursive` before building.
+- Install Rust (needed for the tokenizer build). On Linux/macOS follow [https://rustup.rs](https://rustup.rs). On Windows, after installing rustup, ensure the toolchain is MSVC x86\_64 and the cargo bin directory is on `PATH`:
+  ```powershell
+  $env:Path += ";$env:USERPROFILE\.cargo\bin"
+  setx PATH "$env:Path"
+  setx CARGO_HOME "$env:USERPROFILE\.cargo"
+  setx RUSTUP_HOME "$env:USERPROFILE\.rustup"
+  rustup set default-host x86_64-pc-windows-msvc
+  rustup default stable-x86_64-pc-windows-msvc
+  cargo --version
+  rustup --version
+  ```
+- Build the tokenizer once per machine:
+  ```bash
+  uv run maturin develop
+  ```
+
 ### Option 1: Lambda Labs Cloud (Automated)
 
 Use the automation helper for one-command deployment:

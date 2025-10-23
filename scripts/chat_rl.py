@@ -1,5 +1,5 @@
 """
-Reinforcement learning on AQuA-RAT via "GRPO".
+Reinforcement learning on GSM8K via "GRPO".
 
 I put GRPO in quotes because we actually end up with something a lot
 simpler and more similar to just REINFORCE:
@@ -26,7 +26,7 @@ import torch.distributed as dist
 from nanochat.common import compute_init, compute_cleanup, print0, get_base_dir, DummyWandb
 from nanochat.checkpoint_manager import save_checkpoint, load_model
 from nanochat.engine import Engine
-from tasks.aqua import AQUA
+from tasks.gsm8k import GSM8K
 
 # RL hyperparameters
 run = "dummy" # wandb run name
@@ -43,10 +43,10 @@ embedding_lr = 0.2
 matrix_lr = 0.02
 weight_decay = 0.0
 init_lr_frac = 0.05
-num_epochs = 1 # how many epochs of AQuA to train on
+num_epochs = 1 # how many epochs of gsm8k to train on
 save_every = 60 # every how many steps to save the model
 eval_every = 60 # every how many steps to evaluate the model for val pass@k
-eval_examples = 254 # number of examples used for evaluating accuracy
+eval_examples = 400 # number of examples used for evaluating pass@k
 # now allow CLI to override the settings via the configurator lol
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
 exec(open(os.path.join('nanochat', 'configurator.py')).read()) # overrides from command line or config file
@@ -70,8 +70,8 @@ engine = Engine(model, tokenizer) # for sampling rollouts
 # -----------------------------------------------------------------------------
 # Rollout / sampling generator loop that yields batches of examples for training
 
-train_task = AQUA(split="train")
-val_task = AQUA(split="validation")
+train_task = GSM8K(subset="main", split="train")
+val_task = GSM8K(subset="main", split="test")
 num_steps = (len(train_task) // examples_per_step) * num_epochs
 print0(f"Calculated number of steps: {num_steps}")
 
@@ -140,8 +140,8 @@ def get_batch():
         yield generated_token_sequences, inputs, targets, rewards, advantages
 
 # -----------------------------------------------------------------------------
-# Simple evaluation loop for AQuA accuracy
-def run_aqua_eval(task, tokenizer, engine,
+# Simple evaluation loop for GSM8K pass@k
+def run_gsm8k_eval(task, tokenizer, engine,
     max_examples=None,
     num_samples=1,
     max_completion_tokens=256,
@@ -149,7 +149,7 @@ def run_aqua_eval(task, tokenizer, engine,
     top_k=50
 ):
     """
-    Evaluates AQuA task and returns a list of records of evaluation outcomes.
+    Evaluates GSM8K task and returns a list of records of evaluation outcomes.
     In a distributed setting, all ranks cooperate but this function will NOT
     do the reduction across ranks. This is the responsibility of the caller.
     Because the evaluation can take a while, this function will yield records one by one.
@@ -221,7 +221,7 @@ for step in range(num_steps):
         model.eval()
         passk = torch.zeros(device_batch_size, device=device) # pass@k for k=1..device_batch_size
         with autocast_ctx:
-            records_iter = run_aqua_eval(val_task, tokenizer, engine, num_samples=device_batch_size, max_examples=eval_examples, temperature=1.0)
+            records_iter = run_gsm8k_eval(val_task, tokenizer, engine, num_samples=device_batch_size, max_examples=eval_examples, temperature=1.0)
             records = list(records_iter) # collect all records
         for k in range(1, device_batch_size + 1):
             passk[k - 1] = sum(any(o["is_correct"] for o in r["outcomes"][:k]) for r in records)
