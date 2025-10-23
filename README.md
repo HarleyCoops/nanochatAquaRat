@@ -572,6 +572,7 @@ Budget options:
 - **[launch_lambda.py](launch_lambda.py)** - Simplified launcher
 - **[QUICKSTART.md](QUICKSTART.md)** - Fast track guide
 - **[LAMBDA_MANUAL_SETUP.md](LAMBDA_MANUAL_SETUP.md)** - Manual setup walkthrough
+- **[GCS_UPLOAD_GUIDE.md](GCS_UPLOAD_GUIDE.md)** - Upload weights to Google Cloud Storage
 - **[.env.template](.env.template)** - Environment configuration
 
 ---
