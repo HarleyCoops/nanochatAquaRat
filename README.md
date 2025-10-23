@@ -66,68 +66,87 @@ This project adapts the **nanochat** training framework (originally designed for
 ### Architecture
 
 ```tikz
-\begin{tikzpicture}[
-    node distance=1.5cm,
-    every node/.style={font=\small},
-    input/.style={rectangle, draw=#1e40af, fill=#1e3a8a, text=white, minimum width=2cm, minimum height=0.8cm, align=center},
-    embedding/.style={rectangle, draw=#2563eb, fill=#3b82f6, text=white, minimum width=2cm, minimum height=0.8cm, align=center},
-    transformer/.style={rectangle, draw=#0284c7, fill=#0ea5e9, text=white, minimum width=2cm, minimum height=0.8cm, align=center},
-    internal/.style={rectangle, draw=#0891b2, fill=#06b6d4, text=white, minimum width=1.5cm, minimum height=0.6cm, align=center},
-    output/.style={rectangle, draw=#1e40af, fill=#1e3a8a, text=white, minimum width=2cm, minimum height=0.8cm, align=center},
-    arrow/.style={->, thick, color=#1e40af}
-]
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc, fit}
 
-% Input layer
-\node[input] (input) {Input\\Tokens};
-\node[embedding, below of=input] (token_emb) {Token\\Embedding};
-\node[embedding, below of=token_emb] (pos_emb) {Position\\Embedding};
-\node[embedding, below of=pos_emb] (embed_layer) {Embedding\\Layer};
+\begin{document}
 
-% Transformer blocks
-\node[transformer, below of=embed_layer] (trans1) {Transformer\\Block 1};
-\node[transformer, below of=trans1] (trans2) {Transformer\\Block 2};
-\node[transformer, below of=trans2] (trans_dots) {...};
-\node[transformer, below of=trans_dots] (transN) {Transformer\\Block N};
+% Define styles for the blocks
+\tikzset{
+    % Node styles
+    input/.style={rectangle, rounded corners, draw=black, fill=blue!70!black, text=white, minimum height=1cm, minimum width=3cm, text width=3cm, align=center, thick},
+    process/.style={rectangle, rounded corners, draw=black, fill=blue!50, text=white, minimum height=1cm, minimum width=3cm, text width=3cm, align=center, thick},
+    block/.style={rectangle, rounded corners, draw=black, fill=cyan!60, text=white, minimum height=1cm, minimum width=3cm, text width=3cm, align=center, thick},
+    add/.style={circle, draw=black, fill=gray!20, minimum size=0.8cm, thick},
+    output/.style={rectangle, rounded corners, draw=black, fill=blue!70!black, text=white, minimum height=1cm, minimum width=3cm, text width=3cm, align=center, thick},
+    
+    % Box around the block
+    fit_box/.style={draw, dashed, thick, inner sep=0.5cm, rounded corners, label={[anchor=east,xshift=-0.2cm]right:Transformer Block $n$}},
+    
+    % Arrow styles
+    main_arrow/.style={-{Latex[length=3mm]}, thick},
+    res_arrow/.style={-{Latex[length=3mm]}, thick, blue!60!black, dashed}
+}
 
-% Transformer block detail (side panel)
-\node[internal, right=4cm of trans2] (attn) {Multi-Head\\Attention\\Causal};
-\node[internal, below of=attn] (ln1) {Layer\\Norm};
-\node[internal, below of=ln1] (mlp) {MLP with\\GELU};
-\node[internal, below of=mlp] (ln2) {Layer\\Norm};
-\node[internal, below of=ln2] (res1) {Residual\\Connection};
-\node[internal, below of=res1] (res2) {Residual\\Connection};
+\begin{tikzpicture}[node distance=1cm and 1.5cm]
 
-% Output layer
-\node[embedding, below of=transN] (final_norm) {Final Layer\\Norm};
-\node[output, below of=final_norm] (logits) {Output\\Logits};
-\node[output, below of=logits] (prediction) {Next Token\\Prediction};
+    % --- Input ---
+    \node (input_tok) [input] {Input Tokens};
+    \node (embed) [process, below=of input_tok] {Embedding Layer (Token + Position)};
+    
+    % --- Start of Blocks ---
+    \node (dots_top) [below=of embed, yshift=0.2cm] {$\vdots$};
+    \coordinate (block_in) at ($(dots_top.south) + (0, -0.5cm)$); % Input point for the block
+    
+    % --- Inside Transformer Block 'n' ---
+    \node (ln1) [process, below=of block_in] {Layer Normalization};
+    \node (mha) [block, below=of ln1] {Causal Multi-Head Attention};
+    \node (add1) [add, below=of mha] {+};
+    \node (ln2) [process, below=of add1] {Layer Normalization};
+    \node (mlp) [block, below=of ln2] {MLP (Feed-Forward)};
+    \node (add2) [add, below=of mlp] {+};
 
-% Arrows
-\draw[arrow] (input) -- (token_emb);
-\draw[arrow] (token_emb) -- (pos_emb);
-\draw[arrow] (pos_emb) -- (embed_layer);
-\draw[arrow] (embed_layer) -- (trans1);
-\draw[arrow] (trans1) -- (trans2);
-\draw[arrow] (trans2) -- (trans_dots);
-\draw[arrow] (trans_dots) -- (transN);
-\draw[arrow] (transN) -- (final_norm);
-\draw[arrow] (final_norm) -- (logits);
-\draw[arrow] (logits) -- (prediction);
-
-% Transformer block detail arrows
-\draw[arrow] (attn) -- (ln1);
-\draw[arrow] (ln1) -- (mlp);
-\draw[arrow] (mlp) -- (ln2);
-\draw[arrow] (ln2) -- (res1);
-\draw[arrow] (res1) -- (res2);
-
-% Connection from transformer to detail
-\draw[arrow, dashed] (trans2) -- (attn);
-
-% Title for transformer block detail
-\node[above=0.5cm of attn, font=\small\bfseries, color=#1e40af] {Transformer Block Detail};
+    % --- End of Blocks ---
+    \coordinate (block_out) at ($(add2.south) + (0, -0.5cm)$); % Output point for the block
+    \node (dots_bottom) [below=of block_out, yshift=0.2cm] {$\vdots$};
+    
+    % --- Output ---
+    \node (final_norm) [process, below=of dots_bottom] {Final Layer Norm};
+    \node (logits) [output, below=of final_norm] {Output Logits};
+    \node (softmax) [output, below=of logits] {Softmax};
+    \node (pred) [output, below=of softmax] {Next Token Prediction};
+    
+    % --- Draw Main Arrows ---
+    \draw [main_arrow] (input_tok) -- (embed);
+    \draw [main_arrow] (embed) -- (dots_top);
+    \draw [main_arrow] (dots_top) -- (block_in);
+    \draw [main_arrow] (block_in) -- (ln1);
+    \draw [main_arrow] (ln1) -- (mha);
+    \draw [main_arrow] (mha) -- (add1);
+    \draw [main_arrow] (add1) -- (ln2);
+    \draw [main_arrow] (ln2) -- (mlp);
+    \draw [main_arrow] (mlp) -- (add2);
+    \draw [main_arrow] (add2) -- (block_out);
+    \draw [main_arrow] (block_out) -- (dots_bottom);
+    \draw [main_arrow] (dots_bottom) -- (final_norm);
+    \draw [main_arrow] (final_norm) -- (logits);
+    \draw [main_arrow] (logits) -- (softmax);
+    \draw [main_arrow] (softmax) -- (pred);
+    
+    % --- Draw Residual Arrows ---
+    % Residual 1: Bypasses LN1 and MHA
+    \draw [res_arrow] (block_in) -| ++(-2.5, 0) |- (add1.west);
+    
+    % Residual 2: Bypasses LN2 and MLP
+    \draw [res_arrow] (add1.east) -| ++(2.5, 0) |- (add2.east);
+    
+    % --- Draw the 'fit' box ---
+    \node [fit_box, fit=(ln1) (mha) (add1) (ln2) (mlp) (add2)] {};
 
 \end{tikzpicture}
+
+\end{document}
 ```
 
 **Key hyperparameters**:
@@ -539,6 +558,7 @@ nanochatAquaRat/
 |------|------|-------------|
 | `scripts/prepare_aqua.py` | NEW | Downloads AQuA-RAT from DeepMind GitHub |
 | `scripts/launch_lambda_training.py` | NEW | Full-featured Lambda Labs automation |
+| `scripts/launch_hyperbolic_training.py` | NEW | Hyperbolic Labs marketplace automation |
 | `tasks/aqua.py` | NEW | AQuA task handler (load, prompt, evaluate) |
 | `nanochat/attn_logging.py` | NEW | Attention capture and W&B logging |
 | `scripts/chat_rl.py` | MODIFIED | Added `--dataset=AQUA`, KL telemetry |
