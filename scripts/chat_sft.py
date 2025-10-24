@@ -30,6 +30,13 @@ from tasks.smoltalk import SmolTalk
 from tasks.customjson import CustomJSON
 from tasks.aqua import AQUA
 
+from nanochat.wandb_3d_viz import (
+    TrainingMetricsBuffer,
+    GradientFlowBuffer,
+    create_checkpoint_3d_summary,
+    log_3d_plotly_to_wandb
+)
+
 # -----------------------------------------------------------------------------
 # SFT Hyperparameters
 run = "dummy" # wandb run name default ("dummy" is special - we won't log to wandb)
@@ -79,6 +86,10 @@ model, tokenizer, meta = load_model(source, device, phase="train", model_tag=mod
 orig_model = model # original, uncompiled model
 # model = torch.compile(model, dynamic=True) # doesn't work super well because of variable lengths of inputs
 engine = Engine(model, tokenizer) # will be used for inline model evaluation only
+
+# Initialize 3D visualization buffers
+metrics_buffer = TrainingMetricsBuffer(max_size=1000)
+gradient_buffer = GradientFlowBuffer(num_layers=model.config.n_layer, max_steps=100)
 
 # -----------------------------------------------------------------------------
 # Task data mixture we'll train on
@@ -234,10 +245,35 @@ for step in range(num_iterations):
         for group in opt.param_groups:
             group["lr"] = group["initial_lr"] * lrm
 
+    # Compute gradient norm for 3D visualization
+    grad_norm = 0.0
+    for param in model.parameters():
+        if param.grad is not None:
+            grad_norm += param.grad.norm().item() ** 2
+    grad_norm = grad_norm ** 0.5
+
+    # Track gradient flow before optimizer step (master process only)
+    if master_process and not use_dummy_wandb:
+        gradient_buffer.add(step, model)
+
     # step the optimizers
+    current_lr = 0.0
     for opt in optimizers:
+        for group in opt.param_groups:
+            current_lr = max(current_lr, group["lr"])
         opt.step()
     model.zero_grad(set_to_none=True)
+
+    # Add metrics to buffer for 3D visualization (master process only)
+    if master_process and not use_dummy_wandb:
+        metrics_buffer.add(
+            step=step,
+            loss=train_loss_item,
+            lr=current_lr,
+            grad_norm=grad_norm,
+            reward=None,  # No rewards in SFT
+            accuracy=metrics.get("mmlu_acc") if 'metrics' in locals() else None
+        )
 
     # logging
     train_loss_item = train_loss.item()
@@ -248,7 +284,25 @@ for step in range(num_iterations):
         "lrm": lrm,
         "train_loss": train_loss_item,
         "num_tokens": num_tokens_item,
+        "grad_norm": grad_norm,
     })
+
+    # Log 3D visualizations at checkpoint intervals (master process only)
+    if master_process and not use_dummy_wandb and step > 0 and step % eval_every == 0:
+        print0(f"🎨 Generating 3D visualizations at step {step}...")
+        try:
+            viz_dict = create_checkpoint_3d_summary(
+                metrics_buffer=metrics_buffer,
+                gradient_buffer=gradient_buffer,
+                checkpoint_step=step
+            )
+            for viz_name, viz_obj in viz_dict.items():
+                if viz_name != 'step':
+                    wandb_run.log({viz_name: viz_obj, "step": step})
+            print0(f"✅ Logged {len(viz_dict)-1} 3D visualizations to W&B")
+        except Exception as e:
+            print0(f"⚠️  Failed to generate 3D visualizations: {e}")
+
     step += 1
 
 # Save the model at the end of the run
@@ -271,6 +325,22 @@ if master_process:
         }
     )
     print(f"✅ Saved model checkpoint to {checkpoint_dir}")
+
+# Generate final comprehensive 3D visualization summary
+if master_process and not use_dummy_wandb:
+    print0("🎨 Generating final 3D visualization summary...")
+    try:
+        final_viz_dict = create_checkpoint_3d_summary(
+            metrics_buffer=metrics_buffer,
+            gradient_buffer=gradient_buffer,
+            checkpoint_step=step
+        )
+        for viz_name, viz_obj in final_viz_dict.items():
+            if viz_name != 'step':
+                wandb_run.log({f"final/{viz_name}": viz_obj})
+        print0(f"✅ Logged final 3D visualization summary with {len(final_viz_dict)-1} visualizations")
+    except Exception as e:
+        print0(f"⚠️  Failed to generate final 3D visualizations: {e}")
 
 # Log to report
 from nanochat.report import get_report
