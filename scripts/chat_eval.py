@@ -23,6 +23,7 @@ from tasks.humaneval import HumanEval
 from tasks.mmlu import MMLU
 from tasks.arc import ARC
 from tasks.gsm8k import GSM8K
+from tasks.aqua import AQUA
 
 # -----------------------------------------------------------------------------
 # Generative evaluation loop (we go one problem at a time, sample, evaluate)
@@ -165,6 +166,7 @@ def run_chat_eval(task_name, model, tokenizer, engine,
         'ARC-Easy': partial(ARC, subset="ARC-Easy", split="test"),
         'ARC-Challenge': partial(ARC, subset="ARC-Challenge", split="test"),
         'GSM8K': partial(GSM8K, subset="main", split="test"),
+        'AQUA': partial(AQUA, split="validation", shuffle=False),
     }[task_name]
     task_object = task_module()
     # Run the evaluation
