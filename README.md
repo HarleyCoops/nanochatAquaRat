@@ -1,3 +1,17 @@
+---
+language: en
+license: mit
+datasets:
+  - deepmind/aqua_rat
+metrics:
+  - accuracy
+tags:
+  - reinforcement-learning
+  - autoformalization
+  - education
+  - nanochat
+---
+
 <div align="center">
 
 ![AQuA-RAT Training](./aquarat2.png)
@@ -449,6 +463,22 @@ bash run_aquarat_small.sh
 - CUDA GPUs (8x recommended)
 - 40GB+ GPU memory per GPU
 - ~100GB disk space
+
+## Hugging Face Sync
+
+Keep the GitHub docs mirrored with the Hugging Face model card:
+
+1. Edit `README.md` (and any linked docs) as usual.
+2. Stage the release payload locally:
+   ```bash
+   uv run python -m scripts.sync_hf_repo --no-push
+   ```
+   This copies every README dependency into `hf_release/`. The script warns if a referenced file such as `LICENSE` is missing.
+3. Push the staged contents to Hugging Face once you are satisfied:
+   ```bash
+   uv run python -m scripts.sync_hf_repo --repo-id HarleyCooper/nanochatAquaRat
+   ```
+   The command requires prior `huggingface-cli login` (or an `HF_TOKEN` env var). Use `--dry-run` to review operations without copying or uploading.
 
 ---
 
