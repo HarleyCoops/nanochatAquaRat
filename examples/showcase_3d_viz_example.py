@@ -8,6 +8,14 @@ Usage:
     python examples/showcase_3d_viz_example.py
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Add the parent directory to Python path so we can import nanochat
+repo_root = Path(__file__).parent.parent
+sys.path.insert(0, str(repo_root))
+
 import numpy as np
 import torch
 import wandb
