@@ -7,7 +7,10 @@ Get up and running with 3D training visualizations in 5 minutes!
 ### 1. Install Dependencies
 
 ```bash
-cd /home/user/nanochatAquaRat
+# Navigate to the repository root
+cd nanochatAquaRat  # Or your repo path
+
+# Install visualization dependencies
 pip install -r requirements_3d_viz.txt
 ```
 
@@ -33,8 +36,14 @@ export WANDB_API_KEY=your_api_key_here
 Test the visualizations with synthetic data:
 
 ```bash
+# Make sure you're in the repo root directory
+cd nanochatAquaRat  # Or your repo path
+
+# Run the demo
 python examples/showcase_3d_viz_example.py
 ```
+
+**Note**: The script automatically adds the repo to your Python path, so you can run it from the repo root directory.
 
 This will create a W&B project called `nanochat-3d-showcase` with example 3D visualizations.
 
@@ -150,6 +159,25 @@ Watch for these messages:
 ---
 
 ## 🐛 Troubleshooting
+
+### "ModuleNotFoundError: No module named 'nanochat'"
+
+This happens when Python can't find the nanochat module. **Solution**:
+
+```bash
+# Make sure you're running from the repository root directory
+cd nanochatAquaRat  # Or wherever you cloned the repo
+
+# Then run the example
+python examples/showcase_3d_viz_example.py
+```
+
+The example script automatically adds the repo root to Python's path, but you need to run it from the repo root directory.
+
+**Alternative**: Install the package in development mode (if you have a setup.py):
+```bash
+pip install -e .
+```
 
 ### "No module named 'plotly'"
 
