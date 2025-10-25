@@ -289,7 +289,7 @@ for step in range(num_iterations):
 
     # Log 3D visualizations at checkpoint intervals (master process only)
     if master_process and not use_dummy_wandb and step > 0 and step % eval_every == 0:
-        print0(f"🎨 Generating 3D visualizations at step {step}...")
+        print0(f"Generating 3D visualizations at step {step}...")
         try:
             viz_dict = create_checkpoint_3d_summary(
                 metrics_buffer=metrics_buffer,
@@ -299,9 +299,9 @@ for step in range(num_iterations):
             for viz_name, viz_obj in viz_dict.items():
                 if viz_name != 'step':
                     wandb_run.log({viz_name: viz_obj, "step": step})
-            print0(f"✅ Logged {len(viz_dict)-1} 3D visualizations to W&B")
+            print0(f"Logged {len(viz_dict)-1} 3D visualizations to W&B")
         except Exception as e:
-            print0(f"⚠️  Failed to generate 3D visualizations: {e}")
+            print0(f"WARNING: Failed to generate 3D visualizations: {e}")
 
     step += 1
 
@@ -324,11 +324,11 @@ if master_process:
             "model_config": model_config_kwargs,
         }
     )
-    print(f"✅ Saved model checkpoint to {checkpoint_dir}")
+    print(f"Saved model checkpoint to {checkpoint_dir}")
 
 # Generate final comprehensive 3D visualization summary
 if master_process and not use_dummy_wandb:
-    print0("🎨 Generating final 3D visualization summary...")
+    print0("Generating final 3D visualization summary...")
     try:
         final_viz_dict = create_checkpoint_3d_summary(
             metrics_buffer=metrics_buffer,
@@ -338,9 +338,9 @@ if master_process and not use_dummy_wandb:
         for viz_name, viz_obj in final_viz_dict.items():
             if viz_name != 'step':
                 wandb_run.log({f"final/{viz_name}": viz_obj})
-        print0(f"✅ Logged final 3D visualization summary with {len(final_viz_dict)-1} visualizations")
+        print0(f"Logged final 3D visualization summary with {len(final_viz_dict)-1} visualizations")
     except Exception as e:
-        print0(f"⚠️  Failed to generate final 3D visualizations: {e}")
+        print0(f"WARNING: Failed to generate final 3D visualizations: {e}")
 
 # Log to report
 from nanochat.report import get_report

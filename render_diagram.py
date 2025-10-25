@@ -108,15 +108,15 @@ def render_tikz_to_svg():
         subprocess.run(['pdf2svg', 'transformer_architecture.pdf', 'transformer_architecture.svg'], 
                       check=True, capture_output=True)
         
-        print("✅ Successfully rendered TikZ diagram to transformer_architecture.svg")
+        print("Successfully rendered TikZ diagram to transformer_architecture.svg")
         return True
         
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error rendering TikZ: {e}")
+        print(f"Error rendering TikZ: {e}")
         print("Make sure you have pdflatex and pdf2svg installed")
         return False
     except FileNotFoundError:
-        print("❌ Required tools not found. Please install:")
+        print("Required tools not found. Please install:")
         print("  - pdflatex (part of TeX Live or MiKTeX)")
         print("  - pdf2svg")
         return False
@@ -124,9 +124,9 @@ def render_tikz_to_svg():
 if __name__ == "__main__":
     success = render_tikz_to_svg()
     if success:
-        print("\n🎨 Diagram rendered! You can now use transformer_architecture.svg in your README")
+        print("\nDiagram rendered! You can now use transformer_architecture.svg in your README")
     else:
-        print("\n💡 Alternative: Use online TikZ renderer like:")
+        print("\nAlternative: Use online TikZ renderer like:")
         print("   - https://tikzcd.yichuanshen.de/")
         print("   - https://www.overleaf.com/")
         sys.exit(1)

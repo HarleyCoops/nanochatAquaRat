@@ -4,7 +4,7 @@
 # Core dependencies (likely already installed)
 torch>=2.0.0
 numpy>=1.20.0
-wandb>=0.69.0
+wandb>=0.22.0
 
 # Visualization dependencies (NEW - required for 3D viz)
 plotly>=5.18.0

@@ -33,8 +33,8 @@ flowchart TD
 ```
 
 This version:
-- ✅ Renders directly on GitHub
-- ✅ Shows residual connections with dashed lines
-- ✅ Uses the same color scheme
-- ✅ Shows proper transformer architecture
-- ✅ Includes softmax layer
+- Renders directly on GitHub
+- Shows residual connections with dashed lines
+- Uses the same color scheme
+- Shows proper transformer architecture
+- Includes softmax layer

@@ -1,0 +1,50 @@
+_wandb:
+    value:
+        cli_version: 0.22.2
+        e:
+            c6z93ie0qe60zffxrehrbxugk1bcq2ke:
+                codePath: examples\showcase_3d_viz_example.py
+                codePathLocal: examples\showcase_3d_viz_example.py
+                cpu_count: 12
+                cpu_count_logical: 12
+                disk:
+                    /:
+                        total: "1004769636352"
+                        used: "896316473344"
+                email: christian.cooper.us@gmail.com
+                executable: C:\Python312\python.exe
+                git:
+                    commit: 2214d25d08cbe86b99885174984ea91f83595fa1
+                    remote: https://github.com/HarleyCoops/nanochatAquaRat.git
+                host: PC
+                memory:
+                    total: "16749838336"
+                os: Windows-11-10.0.26100-SP0
+                program: C:\Users\chris\nanochatAquaRat\examples\showcase_3d_viz_example.py
+                python: CPython 3.12.6
+                root: C:\Users\chris\nanochatAquaRat
+                startedAt: "2025-10-25T14:26:22.543219Z"
+                writerId: c6z93ie0qe60zffxrehrbxugk1bcq2ke
+        m: []
+        python_version: 3.12.6
+        t:
+            "1":
+                - 1
+                - 105
+            "2":
+                - 1
+                - 105
+            "3":
+                - 2
+                - 13
+                - 16
+            "4": 3.12.6
+            "5": 0.22.2
+            "8":
+                - 3
+            "10":
+                - 21
+            "12": 0.22.2
+            "13": windows-arm64
+demo:
+    value: automatic_visualization

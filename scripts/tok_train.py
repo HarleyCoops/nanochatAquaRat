@@ -63,7 +63,7 @@ test_text = """Hello world! This is a test.
 Numbers: 123, 4567, 89
 Contractions: I'm, you're, it's
 Special chars: @#$%^&*()
-Unicode: 你好世界 🌍"""
+Unicode: 你好世界"""
 encoded = tokenizer.encode(test_text)
 decoded = tokenizer.decode(encoded)
 assert decoded == test_text

@@ -13,7 +13,7 @@ We've built a comprehensive 3D visualization system that leverages:
 - **Plotly Integration**: Custom 3D interactive plots for training dynamics
 - **Real-time Tracking**: Ground truth data from actual model training
 
-## 🎨 Visualization Features
+## Visualization Features
 
 ### 1. 3D Loss Surface Landscape
 
@@ -163,7 +163,7 @@ wandb.log({"3d/embedding_trajectory": fig})
 
 ---
 
-## 📊 Integration Details
+## Integration Details
 
 ### Training Scripts Modified
 
@@ -188,7 +188,7 @@ wandb.log({"3d/embedding_trajectory": fig})
 
 ---
 
-## 🚀 Usage Guide
+## Usage Guide
 
 ### Automatic Logging (Built-in)
 
@@ -240,7 +240,7 @@ torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft --run=my_3d_showcas
 
 ---
 
-## 🎯 Real Training Data Examples
+## Real Training Data Examples
 
 ### AQuA-RAT Dataset Characteristics
 
@@ -274,7 +274,7 @@ torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft --run=my_3d_showcas
 
 ---
 
-## 🔧 Advanced Customization
+## Advanced Customization
 
 ### Adjusting Buffer Sizes
 
@@ -313,7 +313,7 @@ wandb.log({"custom/my_viz": custom_fig})
 
 ---
 
-## 🎓 Scientific Insights from 3D Visualizations
+## Scientific Insights from 3D Visualizations
 
 ### Loss Landscape Insights
 
@@ -351,7 +351,7 @@ wandb.log({"custom/my_viz": custom_fig})
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 The 3D visualization module requires:
 
@@ -378,7 +378,7 @@ pip install plotly scipy scikit-learn umap-learn
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Issue: No visualizations appearing in W&B
 
@@ -413,7 +413,7 @@ pip install plotly scipy scikit-learn umap-learn
 
 ---
 
-## 🎬 Example Output Descriptions
+## Example Output Descriptions
 
 ### Expected Visualization Appearance
 
@@ -438,7 +438,7 @@ pip install plotly scipy scikit-learn umap-learn
 
 ---
 
-## 📝 Code Reference
+## Code Reference
 
 ### Key Functions
 
@@ -472,7 +472,7 @@ pip install plotly scipy scikit-learn umap-learn
 
 ---
 
-## 🚦 Performance Considerations
+## Performance Considerations
 
 ### Computational Cost
 
@@ -491,7 +491,7 @@ pip install plotly scipy scikit-learn umap-learn
 
 ---
 
-## 🎉 Showcase Highlights
+## Showcase Highlights
 
 ### What Makes This Unique
 
@@ -514,7 +514,7 @@ pip install plotly scipy scikit-learn umap-learn
 
 ---
 
-## 📚 Further Reading
+## Further Reading
 
 ### W&B Documentation
 - [Object3D Reference](https://docs.wandb.ai/ref/python/data-types/object3d/)
@@ -533,7 +533,7 @@ pip install plotly scipy scikit-learn umap-learn
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 To extend the 3D visualizations:
 
@@ -545,17 +545,17 @@ To extend the 3D visualizations:
 
 ---
 
-## 📄 License
+## License
 
 This showcase is part of the NanoChat project. All visualizations and code follow the project's license.
 
 ---
 
-## 🎊 Conclusion
+## Conclusion
 
 This 3D visualization showcase demonstrates the cutting edge of neural network training monitoring using W&B's latest features. The integration is production-ready, scientifically rigorous, and provides unprecedented insights into the training dynamics of GPT models on the AQuA-RAT reasoning task.
 
-**Happy visualizing!** 🎨🚀
+**Happy visualizing!**
 
 ---
 

@@ -2,7 +2,7 @@
 
 Get up and running with 3D training visualizations in 5 minutes!
 
-## 🚀 Quick Setup
+## Quick Setup
 
 ### 1. Install Dependencies
 
@@ -47,7 +47,7 @@ python examples/showcase_3d_viz_example.py
 
 This will create a W&B project called `nanochat-3d-showcase` with example 3D visualizations.
 
-## 🎯 Run Real Training with 3D Viz
+## Run Real Training with 3D Viz
 
 ### Option 1: RL Training (Recommended for Showcase)
 
@@ -92,7 +92,7 @@ torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft --run=my_3d_showcas
 
 ---
 
-## 📊 View Your Visualizations
+## View Your Visualizations
 
 1. Go to [https://wandb.ai](https://wandb.ai)
 2. Navigate to your project (`nanochat-rl` or `nanochat-sft`)
@@ -110,7 +110,7 @@ torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft --run=my_3d_showcas
 
 ---
 
-## 🎨 Available Visualizations
+## Available Visualizations
 
 ### During Training (every `eval_every` steps)
 
@@ -127,7 +127,7 @@ All visualizations are re-logged with `final/` prefix showing the complete train
 
 ---
 
-## ⚡ Quick Tips
+## Quick Tips
 
 ### Adjust Visualization Frequency
 
@@ -152,13 +152,13 @@ python -m scripts.chat_rl --run=dummy
 
 Watch for these messages:
 ```
-🎨 Generating 3D visualizations at step 60...
-✅ Logged 4 3D visualizations to W&B
+Generating 3D visualizations at step 60...
+Logged 4 3D visualizations to W&B
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### "ModuleNotFoundError: No module named 'nanochat'"
 
@@ -205,7 +205,7 @@ Or increase `eval_every` to generate visualizations less frequently.
 
 ---
 
-## 📦 What Was Added to Your Codebase
+## What Was Added to Your Codebase
 
 ### New Files
 
@@ -246,7 +246,7 @@ Or increase `eval_every` to generate visualizations less frequently.
 
 ---
 
-## 🎓 Next Steps
+## Next Steps
 
 1. **Run the demo**: `python examples/showcase_3d_viz_example.py`
 2. **Start real training**: `python -m scripts.chat_rl --run=showcase_test`
@@ -256,7 +256,7 @@ Or increase `eval_every` to generate visualizations less frequently.
 
 ---
 
-## 📚 Key Documentation
+## Key Documentation
 
 - **Full Showcase**: `WANDB_3D_SHOWCASE.md` - Complete technical documentation
 - **Example Script**: `examples/showcase_3d_viz_example.py` - Working demo code
@@ -265,16 +265,16 @@ Or increase `eval_every` to generate visualizations less frequently.
 
 ---
 
-## 🎉 You're Ready!
+## You're Ready!
 
 You now have state-of-the-art 3D training visualizations integrated into your model training pipeline!
 
 ```bash
-# Let's go! 🚀
+# Let's go!
 python -m scripts.chat_rl --run=my_first_3d_showcase --eval_every=30
 ```
 
-Check W&B to see your beautiful 3D visualizations! 🎨
+Check W&B to see your beautiful 3D visualizations!
 
 ---
 
