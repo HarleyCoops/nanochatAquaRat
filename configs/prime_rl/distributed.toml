@@ -1,0 +1,45 @@
+# Prime Intellect RL Configuration - Distributed Training
+# Configuration optimized for multi-GPU distributed training
+
+model = "nanochat-sft"
+
+[env]
+id = "harleycooper/nanochatAquaRat"
+
+[env.args]
+num_train_examples = 10000  # Larger dataset for distributed training
+num_eval_examples = 254
+seed = 42
+include_rationale_metadata = true
+
+[trainer.args]
+learning_rate = 5e-5       # Higher LR for larger batch size
+rollouts_per_example = 16  # More rollouts for better policy gradient estimates
+max_steps = 1000           # Longer training
+per_device_train_batch_size = 8
+gradient_accumulation_steps = 4
+eval_steps = 100
+save_steps = 200
+logging_steps = 10
+
+temperature = 1.0
+top_k = 50
+max_new_tokens = 256
+
+weight_decay = 0.01        # Some weight decay for regularization
+warmup_steps = 100
+max_grad_norm = 1.0
+
+report_to = ["wandb"]
+run_name = "prime_rl_distributed"
+
+[wandb]
+project = "nanochat-prime-rl"
+tags = ["prime-rl", "nanochat", "aquarat", "distributed", "multi-gpu"]
+notes = "Distributed training configuration for multi-GPU setup"
+
+[distributed]
+# Distributed training settings
+backend = "nccl"
+find_unused_parameters = false
+gradient_as_bucket_view = true
