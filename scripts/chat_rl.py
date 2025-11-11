@@ -80,8 +80,8 @@ gradient_buffer = GradientFlowBuffer(num_layers=model.config.n_layer, max_steps=
 # -----------------------------------------------------------------------------
 # Rollout / sampling generator loop that yields batches of examples for training
 
-train_task = GSM8K(subset="main", split="train")
-val_task = GSM8K(subset="main", split="test")
+train_task = AQUA(split="train")
+val_task = AQUA(split="validation")
 num_steps = (len(train_task) // examples_per_step) * num_epochs
 print0(f"Calculated number of steps: {num_steps}")
 
